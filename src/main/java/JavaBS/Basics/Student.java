@@ -1,11 +1,20 @@
 package JavaBS.Basics;
 
 public class Student {
-    public static void main(String[] args){
-        String s1 = "hello";
-        String s2 = "hello";
-        String s3 = new String("hello");
+    String name;
+    int age;
+    String grade;
 
-        System.out.println(s1==s3);
+    public Student(String name, int age, String grade) {
+        this.name = name;
+        this.age = age;
+        this.grade = grade;
+    }
+
+    // Method to display student details
+    public void displayInfo() {
+        System.out.println("Name: " + name);
+        System.out.println("Age: " + age);
+        System.out.println("Grade: " + grade);
     }
 }
