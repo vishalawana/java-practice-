@@ -17,5 +17,5 @@ public class Main {
         User user = new User("vishal", 25);
         Box<User> userBox = new Box<>(user);
         System.out.println("\nUser Value: " + userBox.getValue());
-    }
+    } 
 }
