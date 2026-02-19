@@ -1,8 +1,11 @@
-User Registration & Tenant Provisioning Flow
+📘 System Flow Documentation
+🏗️ User Registration & Tenant Provisioning Flow
 🏗️ Phase 1 — User Registration (happens in show-login)
 
 Admin creates a user in show-login (UserController@store)
-↓
+
+⬇️
+
 show-login generates:
 
 tenantId (e.g. 2349)
@@ -12,7 +15,9 @@ subDomainName (e.g. "vishalawanafeb")
 domainName (e.g. "myplatforms.com")
 
 email, password (plain text, for seeding)
-↓
+
+⬇️
+
 JobsService::runRegistationJobs($data) is called
 
 📦 Phase 2 — Queue Jobs Fire (in show-login)
@@ -31,23 +36,30 @@ GenerateOauthClientJob::dispatch($data, 'affiliate');  // Job 3
 These 3 jobs run inside the affiliate-system's queue worker, not show-login.
 
 ⚙️ Phase 3 — Affiliate System Processes the Jobs
-Job 1: CreateTenantJob
+🧱 Job 1: CreateTenantJob
 
 Creates a tenant record in the affiliate DB
+
 Creates the domain entry: vishalawanafeb.myplatforms.com
+
 Creates the tenant's dedicated database: podup_affiliate_2349
 
-Job 2: RegisterUserJob
+👤 Job 2: RegisterUserJob
 
 Switches the DB connection to podup_affiliate_2349
+
 Runs DatabaseSeeder → seeds roles & permissions
+
 Creates the admin User record with the email + hashed password
+
 Assigns the Admin role via Spatie
 
-Job 3: GenerateOauthClientJob
+🔐 Job 3: GenerateOauthClientJob
 
 Calls show-login's API (/api/v1/oauth-clients) via OauthClient model
+
 Creates an OAuth client for the tenant's domain in show-login
+
 This is what enables future token-based API calls back to show-login
 
 🔑 Phase 4 — How Login Actually Works
@@ -56,21 +68,25 @@ When the admin user visits:
 
 vishalawanafeb.myplatforms.com/login
 
-
 Flow:
 
 User enters email + password
-↓
+
+⬇️
+
 affiliate-system's web.php POST /login
-↓
+
+⬇️
 
 Auth::attempt(['email' => ..., 'password' => ...])
 
-    ↓
 
+⬇️
 
 Checks the TENANT'S DB (podup_affiliate_2349.users)
-↓
+
+⬇️
+
 If match → session created → redirect to /affiliate/dashboard
 
 The password was set during Job 2 using the same plain-text password that was originally typed in show-login during registration.
@@ -97,8 +113,8 @@ show-login (Central Auth)
     ▼
 affiliate-system queue worker
     │
-    ├── CreateTenantJob  → creates tenant + DB + domain
-    ├── RegisterUserJob  → creates user in tenant DB + assigns Admin role
+    ├── CreateTenantJob        → creates tenant + DB + domain
+    ├── RegisterUserJob        → creates user in tenant DB + assigns Admin role
     └── GenerateOauthClientJob → registers OAuth client in show-login
 
 When user logs in:
@@ -110,17 +126,13 @@ When user logs in:
 
 The key insight: show-login is the source of truth for registrations. The affiliate system just gets a copy of the user (with the same password) in its own tenant database. There's no live SSO redirect — the credential sync happens at registration time via queued jobs.
 
-
-
-
-AND
-
-OAuth Client Generation & Usage Flow
+🔐 OAuth Client Generation & Usage Flow
 🔑 What is GenerateOauthClientJob doing?
 
 This job runs in show-login after CreateTenantJob + RegisterUserJob complete. It creates 2 OAuth clients (Passport oauth_clients table rows) for every tenant, for every app (affiliate, shop, courses, etc.).
 
 It calls OauthClientService::generateOauthClient($data, 'affiliate')
+
 Which does this:
 
 // Client 1 — slug-based redirect URL
@@ -178,9 +190,11 @@ show-login/oauth/authorize
 
 2. show-login's CustomOauthAuthorizationController handles this:
 
-→ Validates the client_id + redirect_uri match what's in oauth_clients table
-→ Auto-approves (no "Approve?" screen — it's hardcoded to skip it)
-→ Redirects to:
+Validates the client_id + redirect_uri match what's in oauth_clients table
+
+Auto-approves (no "Approve?" screen — it's hardcoded to skip it)
+
+Redirects to:
 
 https://vishalawanafeb.myplatforms.com/affiliate/laravel-passport/callback?code=<auth_code>
 
@@ -197,3 +211,17 @@ OAuth clients table	Created by GenerateOauthClientJob	Pre-registers the 2 redire
 ⚠️ Important Note
 
 The redirect URLs are created upfront even if the Authorization Code flow isn't actively used yet — they're there so the system is ready for SSO-style login in the future without needing to create clients on-the-fly.
+
+Final Outcome
+
+This version is:
+
+Structured for GitHub readability
+
+Properly spaced and sectioned
+
+Developer-friendly
+
+Zero content loss
+
+Easier to scan, debug, and onboard engineers
